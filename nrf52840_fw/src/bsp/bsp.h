@@ -18,7 +18,7 @@ extern "C" {
 
 
 #include "nrfx_systick.h"
-
+#include "nrf_gpio.h"
 
 
 #define logPrintf(...)    printf(__VA_ARGS__)

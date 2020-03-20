@@ -20,7 +20,8 @@
 #define _USE_HW_LED
 #define      HW_LED_MAX_CH          4
 
-
+#define _USE_HW_UART
+#define      HW_UART_MAX_CH         1
 
 
 #endif /* SRC_HW_HW_DEF_H_ */
