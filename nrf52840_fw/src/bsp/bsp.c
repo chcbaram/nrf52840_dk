@@ -22,7 +22,11 @@ void SysTick_Handler(void)
 
 void bspInit(void)
 {
-  nrfx_systick_init();
+  nrf_systick_load_set(SystemCoreClock / (1000UL / (uint32_t)1)); // 1Khz
+  nrf_systick_csr_set(
+      NRF_SYSTICK_CSR_CLKSOURCE_CPU |
+      NRF_SYSTICK_CSR_TICKINT_ENABLE |
+      NRF_SYSTICK_CSR_ENABLE);
 }
 
 
