@@ -33,5 +33,9 @@
 #define _DEF_UART4                  3
 
 
+#define _DEF_HIGH                   1
+#define _DEF_LOW                    0
+
+
 
 #endif /* SRC_COMMON_DEF_H_ */
