@@ -17,6 +17,8 @@
 void apInit(void)
 {
   hwInit();
+
+  cmdifOpen(_DEF_UART1, 57600);
 }
 
 void apMain(void)
@@ -32,11 +34,7 @@ void apMain(void)
 
       ledToggle(_DEF_LED1);
     }
-
-    if (uartAvailable(_DEF_UART1) > 0)
-    {
-      logPrintf("rx 0x%X\n", uartRead(_DEF_UART1));
-    }
+    cmdifMain();
   }
 }
 
