@@ -33,6 +33,8 @@ void apMain(void)
       pre_time = millis();
 
       ledToggle(_DEF_LED1);
+
+      logPrintf("%d, %d\n", micros(), millis());
     }
     cmdifMain();
   }
