@@ -35,6 +35,19 @@ void apMain(void)
       ledToggle(_DEF_LED1);
     }
     cmdifMain();
+
+    if ( tusb_inited() )
+    {
+      //tud_task();
+      tud_cdc_write_flush();
+    }
+
+    if (uartAvailable(_DEF_UART2) > 0)
+    {
+      //uartPrintf(_DEF_UART2, " : 0x%X\n", uartRead(_DEF_UART2));
+      uartPutch(_DEF_UART2,uartRead(_DEF_UART2));
+    }
+
   }
 }
 

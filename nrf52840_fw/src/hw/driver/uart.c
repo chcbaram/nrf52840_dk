@@ -125,6 +125,17 @@ bool uartOpen(uint8_t channel, uint32_t baud)
       uartStartRx(channel);
       ret = true;
       break;
+
+    case _DEF_UART2:
+      p_uart = &uart_tbl[channel];
+
+      p_uart->baud      = baud;
+      p_uart->hw_driver = UART_HW_VCP;
+      p_uart->rx_mode   = UART_MODE_VCP;
+      p_uart->tx_mode   = UART_MODE_VCP;
+      p_uart->is_open   = true;
+      ret = true;
+      break;
   }
 
   return ret;

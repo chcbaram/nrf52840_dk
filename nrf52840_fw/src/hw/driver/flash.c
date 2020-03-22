@@ -12,7 +12,7 @@
 
 #include "flash.h"
 #include "cmdif.h"
-#include "nrf_nvmc.h"
+#include "nrfx_nvmc.h"
 
 
 #define FLASH_ADDR_OFFSET         0x00000000
@@ -361,7 +361,7 @@ bool _flashEraseSector(uint32_t start_sector,  uint32_t sector_cnt)
 
   for (int i=0; i<sector_cnt; i++)
   {
-    nrf_nvmc_page_erase(start_addr + (i*FLASH_SECTOR_SIZE));
+    nrfx_nvmc_page_erase(start_addr + (i*FLASH_SECTOR_SIZE));
   }
 
   return ret;
@@ -382,8 +382,7 @@ bool _flashWritePage(uint32_t addr, uint32_t buf_addr)
     p_dst[i] = p_src[i];
   }
 
-  nrf_nvmc_write_words(addr, buf, FLASH_PAGE_SIZE/4);
-
+  nrfx_nvmc_words_write(addr, buf, FLASH_PAGE_SIZE/4);
 
   return ret;
 }

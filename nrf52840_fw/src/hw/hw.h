@@ -23,7 +23,8 @@ extern "C" {
 #include "swtimer.h"
 #include "button.h"
 #include "flash.h"
-
+#include "usb.h"
+#include "vcp.h"
 
 void hwInit(void);
 

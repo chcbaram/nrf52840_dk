@@ -23,9 +23,12 @@ void hwInit(void)
 
   ledInit();
   buttonInit();
+  vcpInit();
   uartInit();
   uartOpen(_DEF_UART1, 57600);
-
+  uartOpen(_DEF_UART2, 57600);
 
   flashInit();
+
+  usbInit();
 }
