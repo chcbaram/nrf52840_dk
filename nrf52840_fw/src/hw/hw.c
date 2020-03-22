@@ -25,4 +25,7 @@ void hwInit(void)
   buttonInit();
   uartInit();
   uartOpen(_DEF_UART1, 57600);
+
+
+  flashInit();
 }
