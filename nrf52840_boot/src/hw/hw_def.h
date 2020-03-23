@@ -37,8 +37,8 @@
 
 
 
-#define FLASH_ADDR_TAG              0x00027800
-#define FLASH_ADDR_FW               0x00027000
+#define FLASH_ADDR_TAG              0x00080000
+#define FLASH_ADDR_FW               0x00080400
 
 #define FLASH_ADDR_START            0x00000000
 #define FLASH_ADDR_END              (FLASH_ADDR_START + 1*1024*1024)

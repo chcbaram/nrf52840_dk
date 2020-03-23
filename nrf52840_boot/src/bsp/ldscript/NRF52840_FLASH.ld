@@ -26,6 +26,16 @@ SECTIONS
     . = ALIGN(4);
   } >FLASH
 
+
+  .tag :
+  {
+    . = ALIGN(4);
+    _flash_tag_addr = .;
+    KEEP(*(.tag)) 
+    . = ALIGN(4);
+  } >FLASH
+  
+    
   /* The program code and other data goes into FLASH */
   .text :
   {

@@ -10,13 +10,22 @@ _Min_Stack_Size = 0x400;; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-FLASH (rx)     : ORIGIN = 0x00000000, LENGTH = 512K
+TAG   (rx)     : ORIGIN = 0x00080000, LENGTH = 1K
+FLASH (rx)     : ORIGIN = 0x00080400, LENGTH = 256K
 RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 256K
 }
 
 /* Define output sections */
 SECTIONS
 {
+  .tag :
+  {
+    . = ALIGN(4);
+    _flash_tag_addr = .;
+    KEEP(*(.tag)) 
+    . = ALIGN(4);
+  } >TAG
+  
   /* The startup code goes first into FLASH */
   .isr_vector :
   {
@@ -135,6 +144,11 @@ SECTIONS
   }
 
   .ARM.attributes 0 : { *(.ARM.attributes) }
+  
+  
+  _image_start = LOADADDR(.isr_vector);
+  _image_end = LOADADDR(.data) + SIZEOF(.data);
+  _image_size = _image_end - _image_start;  
 }
 
 
