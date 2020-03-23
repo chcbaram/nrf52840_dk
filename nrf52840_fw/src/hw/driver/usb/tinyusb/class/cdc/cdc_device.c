@@ -34,6 +34,32 @@
 
 volatile bool usb_rx_full = false;
 
+volatile uint8_t  txd_buffer[CFG_TUD_CDC_TX_BUFSIZE];
+volatile uint32_t txd_length    = CFG_TUD_CDC_TX_BUFSIZE;
+volatile uint32_t txd_BufPtrIn  = 0;
+volatile uint32_t txd_BufPtrOut = 0;
+
+
+volatile uint8_t  rxd_buffer[CFG_TUD_CDC_RX_BUFSIZE];
+volatile uint32_t rxd_length    = CFG_TUD_CDC_RX_BUFSIZE;
+volatile uint32_t rxd_BufPtrIn  = 0;
+volatile uint32_t rxd_BufPtrOut = 0;
+
+
+uint32_t CDC_Itf_GetBaud(void);
+uint32_t CDC_Itf_TxAvailable( void );
+uint32_t CDC_Itf_RxAvailable( void );
+int32_t  CDC_Itf_Write( uint8_t *p_buf, uint32_t length );
+uint8_t  CDC_Itf_Getch( void );
+uint8_t  CDC_Itf_Read( void );
+uint32_t CDC_Itf_TxBufLengh( void );
+uint8_t  CDC_Itf_TxRead( void );
+bool CDC_Itf_IsConnected(void);
+void CDC_Itf_Flush( void );
+void CDC_Itf_TxISR(void);
+
+
+
 //--------------------------------------------------------------------+
 // MACRO CONSTANT TYPEDEF
 //--------------------------------------------------------------------+
@@ -94,7 +120,7 @@ static void _prep_out_transaction (uint8_t itf)
     usb_rx_full = true;
   }
 }
-
+#if 1
 static void _prep_out_transaction_sof (uint8_t itf)
 {
   cdcd_interface_t* p_cdc = &_cdcd_itf[itf];
@@ -113,6 +139,7 @@ static void _prep_out_transaction_sof (uint8_t itf)
     }
   }
 }
+#endif
 
 //--------------------------------------------------------------------+
 // APPLICATION API
@@ -188,11 +215,7 @@ bool tud_cdc_n_write_flush (uint8_t itf)
   cdcd_interface_t* p_cdc = &_cdcd_itf[itf];
   TU_VERIFY( !usbd_edpt_busy(TUD_OPT_RHPORT, p_cdc->ep_in) ); // skip if previous transfer not complete
 
-  //uint16_t count = tu_fifo_read_n(&_cdcd_itf[itf].tx_ff, p_cdc->epin_buf, CFG_TUD_CDC_EPSIZE);
-
-  //tu_fifo_remaining(&_cdcd_itf[itf].tx_ff)
-
-  uint16_t count = tu_fifo_read_n(&_cdcd_itf[itf].tx_ff, p_cdc->epin_buf, 63);
+  uint16_t count = tu_fifo_read_n(&_cdcd_itf[itf].tx_ff, p_cdc->epin_buf, CFG_TUD_CDC_EPSIZE);
   if ( count )
   {
     TU_VERIFY( tud_cdc_n_connected(itf) ); // fifo is empty if not connected
@@ -420,6 +443,7 @@ bool cdcd_xfer_cb(uint8_t rhport, uint8_t ep_addr, xfer_result_t result, uint32_
   // Received new data
   if ( ep_addr == p_cdc->ep_out )
   {
+#if 0
     for(uint32_t i=0; i<xferred_bytes; i++)
     {
       tu_fifo_write(&p_cdc->rx_ff, &p_cdc->epout_buf[i]);
@@ -436,15 +460,45 @@ bool cdcd_xfer_cb(uint8_t rhport, uint8_t ep_addr, xfer_result_t result, uint32_
 
     // prepare for OUT transaction
     _prep_out_transaction(itf);
+#else
+    for(int i=0; i<xferred_bytes; i++ )
+    {
+      rxd_buffer[rxd_BufPtrIn] = p_cdc->epout_buf[i];
+
+      rxd_BufPtrIn++;
+
+      /* To avoid buffer overflow */
+      if(rxd_BufPtrIn == rxd_length)
+      {
+        rxd_BufPtrIn = 0;
+      }
+    }
+
+    uint32_t rx_buf_len;
+
+    rx_buf_len = rxd_length - CDC_Itf_RxAvailable() - 1;
+
+
+    if (rx_buf_len >= CFG_TUD_CDC_EPSIZE)
+    {
+      /* Schedule buffer for next receive event */
+      usbd_edpt_xfer(TUD_OPT_RHPORT, p_cdc->ep_out, p_cdc->epout_buf, CFG_TUD_CDC_EPSIZE);
+    }
+    else
+    {
+      usb_rx_full = true;
+    }
+#endif
   }
 
   // Data sent to host, we could continue to fetch data tx fifo to send.
   // But it will cause incorrect baudrate set in line coding.
   // Though maybe the baudrate is not really important !!!
-//  if ( ep_addr == p_cdc->ep_in )
-//  {
-//
-//  }
+  if ( ep_addr == p_cdc->ep_in )
+  {
+    //tud_cdc_write_flush();
+    return true;
+  }
 
   // nothing to do with notif endpoint for now
 
@@ -454,8 +508,204 @@ bool cdcd_xfer_cb(uint8_t rhport, uint8_t ep_addr, xfer_result_t result, uint32_
 
 void cdcd_sof(uint8_t rhport)
 {
-  //tud_cdc_n_write_flush(rhport);
-  _prep_out_transaction_sof(rhport);
+  cdcd_interface_t* p_cdc = _cdcd_itf;
+
+  CDC_Itf_TxISR();
+  //_prep_out_transaction_sof(rhport);
+
+  uint32_t rx_buf_length;
+
+
+  rx_buf_length = rxd_length - CDC_Itf_RxAvailable() - 1;
+
+  // 수신버퍼가 USB 전송 패킷 이상 남았을때만 수신하도록 함.
+  if (usb_rx_full == true)
+  {
+    if (rx_buf_length >= CFG_TUD_CDC_EPSIZE)
+    {
+      usbd_edpt_xfer(TUD_OPT_RHPORT, p_cdc->ep_out, p_cdc->epout_buf, CFG_TUD_CDC_EPSIZE);
+      usb_rx_full = false;
+    }
+  }
+
+}
+
+
+
+
+
+
+
+void CDC_Itf_Init(void)
+{
+  rxd_length      = 0;
+  rxd_BufPtrIn    = 0;
+  rxd_BufPtrOut   = 0;
+
+  txd_length      = 0;
+  txd_BufPtrIn    = 0;
+  txd_BufPtrOut   = 0;
+}
+
+
+
+uint32_t CDC_Itf_TxAvailable( void )
+{
+  uint32_t length = 0;
+
+
+  length = (CFG_TUD_CDC_TX_BUFSIZE + txd_BufPtrIn - txd_BufPtrOut) % txd_length;
+  length = CFG_TUD_CDC_TX_BUFSIZE - length - 1;
+
+  return length;
+}
+
+
+uint32_t CDC_Itf_RxAvailable( void )
+{
+  uint32_t length = 0;
+
+
+  if( rxd_BufPtrIn != rxd_BufPtrOut )
+  {
+    length = (rxd_length + rxd_BufPtrIn - rxd_BufPtrOut) % rxd_length;
+  }
+
+  return length;
+}
+
+uint8_t CDC_Itf_TxRead( void )
+{
+  uint8_t ch = 0;
+  uint32_t buffptr;
+
+
+  buffptr = txd_BufPtrOut;
+
+  ch = txd_buffer[buffptr];
+
+
+  txd_BufPtrOut += 1;
+  if (txd_BufPtrOut >= txd_length)
+  {
+    txd_BufPtrOut = 0;
+  }
+
+  return ch;
+}
+
+int32_t  CDC_Itf_Write( uint8_t *p_buf, uint32_t length )
+{
+  uint32_t i;
+  uint32_t ptr_index;
+
+  if (tud_cdc_n_connected(0) != true)
+  {
+    return -1;
+  }
+
+  if (length >= CDC_Itf_TxAvailable())
+  {
+    return 0;
+  }
+
+  ptr_index = txd_BufPtrIn;
+
+
+  for (i=0; i<length; i++)
+  {
+
+    txd_buffer[ptr_index] = p_buf[i];
+
+    ptr_index++;
+
+    /* To avoid buffer overflow */
+    if(ptr_index == txd_length)
+    {
+      ptr_index = 0;
+    }
+  }
+  txd_BufPtrIn = ptr_index;
+
+
+
+  return length;
+}
+
+uint32_t CDC_Itf_TxBufLengh( void )
+{
+  uint32_t length = 0;
+
+
+  length = (txd_length + txd_BufPtrIn - txd_BufPtrOut) % txd_length;
+
+  return length;
+}
+
+
+uint8_t  CDC_Itf_Getch( void )
+{
+  while(1)
+  {
+    if( CDC_Itf_RxAvailable() ) break;
+  }
+
+  return CDC_Itf_Read();
+}
+
+uint8_t  CDC_Itf_Read( void )
+{
+  uint8_t ch = 0;
+  uint32_t buffptr;
+
+
+  if( rxd_BufPtrIn == rxd_BufPtrOut ) return 0;
+
+
+  buffptr = rxd_BufPtrOut;
+
+  ch = rxd_buffer[buffptr];
+
+  rxd_BufPtrOut += 1;
+  if (rxd_BufPtrOut >= rxd_length)
+  {
+    rxd_BufPtrOut = 0;
+  }
+
+
+  return ch;
+}
+
+void CDC_Itf_TxISR(void)
+{
+  uint32_t buffsize;
+  cdcd_interface_t* p_cdc = &_cdcd_itf[0];
+
+
+  if (usbd_edpt_busy(TUD_OPT_RHPORT, p_cdc->ep_in) == true)
+  {
+    return;
+  }
+
+
+  buffsize = CDC_Itf_TxBufLengh();
+
+  if (buffsize == 0) return;
+  if (buffsize > CFG_TUD_CDC_EPSIZE) buffsize = CFG_TUD_CDC_EPSIZE;
+
+  // TODO: 보낼데이터가 64의 배수이면 제로패킷을 보내야 해서, 64의 배수가 되지 않도록 임식 변경
+  if (buffsize%64 == 0)
+  {
+    buffsize -= 1;
+  }
+
+  for (int i=0; i<buffsize; i++)
+  {
+    p_cdc->epin_buf[i] = CDC_Itf_TxRead();
+  }
+
+
+  usbd_edpt_xfer(TUD_OPT_RHPORT, p_cdc->ep_in, p_cdc->epin_buf, buffsize);
 }
 
 

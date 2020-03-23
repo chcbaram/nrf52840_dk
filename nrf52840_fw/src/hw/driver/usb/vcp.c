@@ -39,8 +39,16 @@ static bool is_init = false;
 
 //-- External Functions
 //
-
-
+extern uint32_t CDC_Itf_GetBaud(void);
+extern uint32_t CDC_Itf_TxAvailable( void );
+extern uint32_t CDC_Itf_RxAvailable( void );
+extern int32_t  CDC_Itf_Write( uint8_t *p_buf, uint32_t length );
+extern uint8_t  CDC_Itf_Getch( void );
+extern uint8_t  CDC_Itf_Read( void );
+extern uint32_t CDC_Itf_TxBufLengh( void );
+extern bool CDC_Itf_IsConnected(void);
+extern void CDC_Itf_Flush( void );
+extern void CDC_Itf_Init(void);
 
 
 bool vcpInit(void)
@@ -64,8 +72,7 @@ bool vcpFlush(void)
 {
   if (is_init != true) return false;
 
-  tud_cdc_n_read_flush(0);
-  tud_cdc_n_write_flush(0);
+  CDC_Itf_Flush();
 
   return true;
 }
@@ -74,7 +81,8 @@ uint32_t vcpAvailable(void)
 {
   if (is_init != true) return 0;
 
-  return tud_cdc_n_available(0);
+  //return tud_cdc_n_available(0);
+  return CDC_Itf_RxAvailable();
 }
 
 void vcpPutch(uint8_t ch)
@@ -89,8 +97,7 @@ uint8_t vcpGetch(void)
 {
   if (is_init != true) return 0;
 
-  //return CDC_Itf_Getch();
-  return 0;
+  return CDC_Itf_Getch();
 }
 
 int32_t vcpWrite(uint8_t *p_data, uint32_t length)
@@ -108,8 +115,8 @@ int32_t vcpWrite(uint8_t *p_data, uint32_t length)
   {
     //tx_len = tud_cdc_n_write_available(0);
 
-    //ret = CDC_Itf_Write( p_data, length );
-    ret = tud_cdc_n_write(0, p_data, length);
+    ret = CDC_Itf_Write( p_data, length );
+    //ret = tud_cdc_n_write(0, p_data, length);
 
     if(ret < 0)
     {
@@ -141,8 +148,8 @@ int32_t vcpWriteTimeout(uint8_t *p_data, uint32_t length, uint32_t timeout)
   t_time = millis();
   while(1)
   {
-    //ret = CDC_Itf_Write( p_data, length );
-    ret = tud_cdc_n_write(0, p_data, length);
+    ret = CDC_Itf_Write( p_data, length );
+    //ret = tud_cdc_n_write(0, p_data, length);
 
     if(ret < 0)
     {
@@ -168,7 +175,8 @@ uint8_t vcpRead(void)
 {
   if (is_init != true) return 0;
 
-  return tud_cdc_n_read_char(0);
+  //return tud_cdc_n_read_char(0);
+  return CDC_Itf_Read();
 }
 
 int32_t vcpPrintf( const char *fmt, ...)

@@ -947,6 +947,8 @@ static bool process_get_descriptor(uint8_t rhport, tusb_control_request_t const 
 }
 
 extern void tud_task_isr(void);
+extern void cdcd_sof(uint8_t rhport);
+
 //--------------------------------------------------------------------+
 // DCD Event Handler
 //--------------------------------------------------------------------+
@@ -962,8 +964,9 @@ void dcd_event_handler(dcd_event_t const * event, bool in_isr)
     break;
 
     case DCD_EVENT_SOF:
-      //return;   // skip SOF event for now
-      osal_queue_send(_usbd_q, event, in_isr);
+      cdcd_sof(0);
+      return;   // skip SOF event for now
+      //osal_queue_send(_usbd_q, event, in_isr);
     break;
 
     case DCD_EVENT_SUSPEND:
@@ -992,7 +995,7 @@ void dcd_event_handler(dcd_event_t const * event, bool in_isr)
   }
 
 
-  tud_task_isr();
+  //tud_task_isr();
 }
 
 void dcd_event_bus_signal (uint8_t rhport, dcd_eventid_t eid, bool in_isr)

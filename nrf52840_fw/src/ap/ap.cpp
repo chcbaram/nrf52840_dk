@@ -25,7 +25,6 @@ void apMain(void)
 {
   uint32_t pre_time;
 
-
   while(1)
   {
     if (millis()-pre_time >= 500)
@@ -38,16 +37,18 @@ void apMain(void)
 
     if ( tusb_inited() )
     {
-      //tud_task();
-      tud_cdc_write_flush();
+      tud_task();
     }
 
     if (uartAvailable(_DEF_UART2) > 0)
     {
       //uartPrintf(_DEF_UART2, " : 0x%X\n", uartRead(_DEF_UART2));
-      uartPutch(_DEF_UART2,uartRead(_DEF_UART2));
-    }
+      uint8_t ch;
 
+      ch = uartRead(_DEF_UART2);
+      //uartPutch(_DEF_UART1, ch);
+      uartPutch(_DEF_UART2, ch);
+    }
   }
 }
 
