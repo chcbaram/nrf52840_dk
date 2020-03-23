@@ -34,18 +34,19 @@
 
 volatile bool usb_rx_full = false;
 
-volatile uint8_t  txd_buffer[CFG_TUD_CDC_TX_BUFSIZE];
+volatile uint8_t *txd_buffer;
 volatile uint32_t txd_length    = CFG_TUD_CDC_TX_BUFSIZE;
 volatile uint32_t txd_BufPtrIn  = 0;
 volatile uint32_t txd_BufPtrOut = 0;
 
 
-volatile uint8_t  rxd_buffer[CFG_TUD_CDC_RX_BUFSIZE];
+volatile uint8_t *rxd_buffer;
 volatile uint32_t rxd_length    = CFG_TUD_CDC_RX_BUFSIZE;
 volatile uint32_t rxd_BufPtrIn  = 0;
 volatile uint32_t rxd_BufPtrOut = 0;
 
 
+void CDC_Itf_Init(void);
 uint32_t CDC_Itf_GetBaud(void);
 uint32_t CDC_Itf_TxAvailable( void );
 uint32_t CDC_Itf_RxAvailable( void );
@@ -120,26 +121,6 @@ static void _prep_out_transaction (uint8_t itf)
     usb_rx_full = true;
   }
 }
-#if 1
-static void _prep_out_transaction_sof (uint8_t itf)
-{
-  cdcd_interface_t* p_cdc = &_cdcd_itf[itf];
-
-  // skip if previous transfer not complete
-  if ( usbd_edpt_busy(TUD_OPT_RHPORT, p_cdc->ep_out) ) return;
-
-  if (usb_rx_full == true)
-  {
-    // Prepare for incoming data but only allow what we can store in the ring buffer.
-    uint16_t max_read = tu_fifo_remaining(&p_cdc->rx_ff);
-    if ( max_read >= CFG_TUD_CDC_EPSIZE )
-    {
-      usbd_edpt_xfer(TUD_OPT_RHPORT, p_cdc->ep_out, p_cdc->epout_buf, CFG_TUD_CDC_EPSIZE);
-      usb_rx_full = false;
-    }
-  }
-}
-#endif
 
 //--------------------------------------------------------------------+
 // APPLICATION API
@@ -271,6 +252,7 @@ void cdcd_reset(uint8_t rhport)
     tu_fifo_clear(&_cdcd_itf[i].rx_ff);
     tu_fifo_clear(&_cdcd_itf[i].tx_ff);
   }
+  CDC_Itf_Init();
 }
 
 bool cdcd_open(uint8_t rhport, tusb_desc_interface_t const * itf_desc, uint16_t *p_length)
@@ -511,7 +493,7 @@ void cdcd_sof(uint8_t rhport)
   cdcd_interface_t* p_cdc = _cdcd_itf;
 
   CDC_Itf_TxISR();
-  //_prep_out_transaction_sof(rhport);
+
 
   uint32_t rx_buf_length;
 
@@ -538,16 +520,39 @@ void cdcd_sof(uint8_t rhport)
 
 void CDC_Itf_Init(void)
 {
-  rxd_length      = 0;
+  cdcd_interface_t* p_cdc = &_cdcd_itf[0];
+
+
   rxd_BufPtrIn    = 0;
   rxd_BufPtrOut   = 0;
 
-  txd_length      = 0;
   txd_BufPtrIn    = 0;
   txd_BufPtrOut   = 0;
+
+
+  txd_buffer = p_cdc->tx_ff_buf;
+  rxd_buffer = p_cdc->rx_ff_buf;
 }
 
+bool CDC_Itf_IsConnected(void)
+{
+  return tud_cdc_n_connected(0);
+}
 
+void CDC_Itf_Flush( void )
+{
+  //rxd_BufPtrOut = 0;
+  //rxd_BufPtrIn  = 0;
+}
+
+uint32_t CDC_Itf_GetBaud(void)
+{
+  cdc_line_coding_t coding;
+
+  tud_cdc_n_get_line_coding(0, &coding);
+
+  return coding.bit_rate;
+}
 
 uint32_t CDC_Itf_TxAvailable( void )
 {

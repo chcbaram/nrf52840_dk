@@ -64,8 +64,8 @@
  *------------------------------------------------------------------*/
 
 // FIFO size of CDC TX and RX
-#define CFG_TUD_CDC_RX_BUFSIZE      1024
-#define CFG_TUD_CDC_TX_BUFSIZE      1024
+#define CFG_TUD_CDC_RX_BUFSIZE      1500
+#define CFG_TUD_CDC_TX_BUFSIZE      1500
 
 // Buffer size for each read/write transfer, the more the better
 #define CFG_TUD_MSC_BUFSIZE         (4*1024)
