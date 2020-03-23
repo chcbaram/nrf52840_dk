@@ -28,6 +28,8 @@ void hwInit(void)
   uartOpen(_DEF_UART1, 57600);
   uartOpen(_DEF_UART2, 57600);
 
+  logPrintf("\n\n[ Firmware Begin... ]\r\n");
+
   flashInit();
 
   usbInit();

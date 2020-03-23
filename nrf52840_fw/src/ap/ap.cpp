@@ -12,6 +12,7 @@
 
 
 
+void bootCmdif(void);
 
 
 void apInit(void)
@@ -19,6 +20,7 @@ void apInit(void)
   hwInit();
 
   cmdifOpen(_DEF_UART1, 57600);
+  cmdifAdd("boot", bootCmdif);
 }
 
 void apMain(void)
@@ -42,13 +44,33 @@ void apMain(void)
 
     if (uartAvailable(_DEF_UART2) > 0)
     {
-      //uartPrintf(_DEF_UART2, " : 0x%X\n", uartRead(_DEF_UART2));
-      uint8_t ch;
-
-      ch = uartRead(_DEF_UART2);
-      //uartPutch(_DEF_UART1, ch);
-      uartPutch(_DEF_UART2, ch);
+      uartPrintf(_DEF_UART2, "rx : 0x%X\n", uartRead(_DEF_UART2));
     }
   }
 }
 
+
+
+
+
+
+void bootCmdif(void)
+{
+  bool ret = true;
+
+
+  if (cmdifGetParamCnt() == 1 && cmdifHasString("reset", 0) == true)
+  {
+    bspDeInit();
+    NVIC_SystemReset();
+  }
+  else
+  {
+    ret = false;
+  }
+
+  if (ret == false)
+  {
+    cmdifPrintf( "boot reset \n");
+  }
+}
