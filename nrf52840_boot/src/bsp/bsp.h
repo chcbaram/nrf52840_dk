@@ -24,6 +24,8 @@ extern "C" {
 #define logPrintf(...)    printf(__VA_ARGS__)
 
 
+void bspYield(void);
+
 void bspInit(void);
 void bspDeInit(void);
 

@@ -31,6 +31,11 @@ void SysTick_Handler(void)
   swtimerISR();
 }
 
+extern void bspYield(void);
+void bspYield(void)
+{
+  tud_task();
+}
 
 void bspInit(void)
 {

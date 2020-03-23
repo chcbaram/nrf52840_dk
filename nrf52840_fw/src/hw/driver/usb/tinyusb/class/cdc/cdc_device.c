@@ -604,10 +604,12 @@ int32_t  CDC_Itf_Write( uint8_t *p_buf, uint32_t length )
   uint32_t i;
   uint32_t ptr_index;
 
+
   if (tud_cdc_n_connected(0) != true)
   {
     return -1;
   }
+
 
   if (length >= CDC_Itf_TxAvailable())
   {

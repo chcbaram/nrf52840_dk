@@ -383,7 +383,6 @@ bool _flashWritePage(uint32_t addr, uint32_t buf_addr)
   }
 
   nrfx_nvmc_words_write(addr, buf, FLASH_PAGE_SIZE/4);
-
   return ret;
 }
 

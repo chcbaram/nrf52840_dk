@@ -35,6 +35,9 @@
 #define _USE_HW_BUTTON
 #define      HW_BUTTON_MAX_CH       4
 
+#define _USE_HW_CMD
+#define      HW_CMD_MAX_DATA_LENGTH         1500
+
 
 
 #define FLASH_ADDR_TAG              0x00080000

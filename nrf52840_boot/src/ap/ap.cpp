@@ -9,8 +9,10 @@
 
 
 #include "ap.h"
+#include "boot/boot.h"
 
 
+static cmd_t cmd_boot;
 
 void bootCmdif(void);
 
@@ -21,6 +23,9 @@ void apInit(void)
 
   cmdifOpen(_DEF_UART1, 57600);
   cmdifAdd("boot", bootCmdif);
+
+  cmdInit(&cmd_boot);
+  cmdBegin(&cmd_boot, _DEF_UART2, 57600);
 }
 
 void apMain(void)
@@ -34,17 +39,26 @@ void apMain(void)
       pre_time = millis();
 
       ledToggle(_DEF_LED1);
+
     }
-    cmdifMain();
+    //cmdifMain();
 
     if ( tusb_inited() )
     {
       tud_task();
     }
 
-    if (uartAvailable(_DEF_UART2) > 0)
+#if 1
+    if (uartAvailable(_DEF_UART1) > 0)
     {
-      uartPrintf(_DEF_UART2, "rx : 0x%X\n", uartRead(_DEF_UART2));
+      uartPutch(_DEF_UART2, uartRead(_DEF_UART1));
+    }
+#endif
+
+    if (cmdReceivePacket(&cmd_boot) == true)
+    {
+      logPrintf("cmd in\n");
+      bootProcessCmd(&cmd_boot);
     }
   }
 }

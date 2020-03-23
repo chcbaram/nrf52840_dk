@@ -371,11 +371,13 @@ bool cdcd_control_request(uint8_t rhport, tusb_control_request_t const * request
   {
     case CDC_REQUEST_SET_LINE_CODING:
       TU_LOG2("  Set Line Coding\r\n");
+      printf("  Set Line Coding\r\n");
       tud_control_xfer(rhport, request, &p_cdc->line_coding, sizeof(cdc_line_coding_t));
     break;
 
     case CDC_REQUEST_GET_LINE_CODING:
       TU_LOG2("  Get Line Coding\r\n");
+      printf("  Get Line Coding\r\n");
       tud_control_xfer(rhport, request, &p_cdc->line_coding, sizeof(cdc_line_coding_t));
     break;
 
@@ -386,12 +388,17 @@ bool cdcd_control_request(uint8_t rhport, tusb_control_request_t const * request
       //        This signal corresponds to V.24 signal 108/2 and RS-232 signal DTR (Data Terminal Ready)
       // Bit 1: Carrier control for half-duplex modems.
       //        This signal corresponds to V.24 signal 105 and RS-232 signal RTS (Request to Send)
+
       bool const dtr = tu_bit_test(request->wValue, 0);
       bool const rts = tu_bit_test(request->wValue, 1);
 
       p_cdc->line_state = (uint8_t) request->wValue;
 
+      //p_cdc->line_state |= (1<<0);
+      p_cdc->line_state = 3;
+
       TU_LOG2("  Set Control Line State: DTR = %d, RTS = %d\r\n", dtr, rts);
+      printf("  Set Control Line State: DTR = %d, RTS = %d, %x\r\n", dtr, rts, (uint8_t) request->wValue);
 
       tud_control_status(rhport, request);
 

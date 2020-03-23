@@ -25,7 +25,8 @@ extern "C" {
 #include "flash.h"
 #include "usb.h"
 #include "vcp.h"
-
+#include "cmd.h"
+#include "util.h"
 
 
 
