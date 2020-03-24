@@ -34,7 +34,7 @@ void apMain(void)
 
   while(1)
   {
-    if (millis()-pre_time >= 500)
+    if (millis()-pre_time >= 100)
     {
       pre_time = millis();
 
@@ -43,7 +43,7 @@ void apMain(void)
     }
     //cmdifMain();
 
-    if ( tusb_inited() )
+    if (tusb_inited())
     {
       tud_task();
     }
@@ -57,7 +57,6 @@ void apMain(void)
 
     if (cmdReceivePacket(&cmd_boot) == true)
     {
-      logPrintf("cmd in\n");
       bootProcessCmd(&cmd_boot);
     }
   }

@@ -215,21 +215,18 @@ void bootCmdFlashWrite(cmd_t *p_cmd)
   length     |= p_cmd->rx_packet.data[6]<<16;
   length     |= p_cmd->rx_packet.data[7]<<24;
 
-  uint32_t pre_time;
 
-  pre_time = millis();
   if (bootIsFlashRange(addr_begin, length) == true)
   {
-    //if (flashWrite(addr_begin, &p_cmd->rx_packet.data[8], length) == false)
+    if (flashWrite(addr_begin, &p_cmd->rx_packet.data[8], length) == false)
     {
-      //err_code = ERR_FLASH_WRITE;
+      err_code = ERR_FLASH_WRITE;
     }
   }
   else
   {
     err_code = ERR_FLASH_INVALID_ADDR;
   }
-  logPrintf("wt %d ms\n", millis()-pre_time);
 
   cmdSendResp(p_cmd, err_code, NULL, 0);
 }
