@@ -48,17 +48,17 @@ void apMain(void)
       tud_task();
     }
 
-#if 1
-    if (uartAvailable(_DEF_UART1) > 0)
+#if 0
+    if (uartAvailable(_DEF_UART2) > 0)
     {
-      uartPutch(_DEF_UART2, uartRead(_DEF_UART1));
+      uartPutch(_DEF_UART2, uartRead(_DEF_UART2));
     }
-#endif
-
+#else
     if (cmdReceivePacket(&cmd_boot) == true)
     {
       bootProcessCmd(&cmd_boot);
     }
+#endif
   }
 }
 

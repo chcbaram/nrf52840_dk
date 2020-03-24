@@ -155,10 +155,10 @@ static void xact_out_dma(uint8_t epnum)
   NRF_USBD->EPOUT[epnum].PTR    = (uint32_t) xfer->buffer;
   NRF_USBD->EPOUT[epnum].MAXCNT = xact_len;
 
-  edpt_dma_start(&NRF_USBD->TASKS_STARTEPOUT[epnum]);
-
   xfer->buffer     += xact_len;
   xfer->actual_len += xact_len;
+
+  edpt_dma_start(&NRF_USBD->TASKS_STARTEPOUT[epnum]);
 }
 
 /*------------- CBI IN Transfer -------------*/
