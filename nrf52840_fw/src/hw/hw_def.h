@@ -35,6 +35,8 @@
 #define _USE_HW_BUTTON
 #define      HW_BUTTON_MAX_CH       4
 
+#define _USE_HW_SPI
+#define      HW_SPI_MAX_CH          1
 
 
 #endif /* SRC_HW_HW_DEF_H_ */

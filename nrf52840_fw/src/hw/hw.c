@@ -57,7 +57,9 @@ void hwInit(void)
   logPrintf("Addr Hw    \t\t: 0x%X\r\n", (int)hwInit);
 
 
+  spiInit();
   flashInit();
 
   usbInit();
+
 }

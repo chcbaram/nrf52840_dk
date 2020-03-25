@@ -25,7 +25,7 @@ extern "C" {
 #include "flash.h"
 #include "usb.h"
 #include "vcp.h"
-
+#include "spi.h"
 
 
 

@@ -32,6 +32,7 @@
 #include "usbd.h"
 #include "device/usbd_pvt.h"
 #include "dcd.h"
+#include "bsp.h"
 
 #ifndef CFG_TUD_TASK_QUEUE_SZ
 #define CFG_TUD_TASK_QUEUE_SZ   16
@@ -430,6 +431,7 @@ void tud_task (void)
         }
         else
         {
+          delay(1);
           uint8_t const drv_id = _usbd_dev.ep2drv[epnum][ep_dir];
           TU_ASSERT(drv_id < USBD_CLASS_DRIVER_COUNT,);
 

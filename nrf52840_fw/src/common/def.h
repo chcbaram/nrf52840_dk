@@ -33,6 +33,12 @@
 #define _DEF_UART4                  3
 
 
+#define _DEF_SPI1                   0
+#define _DEF_SPI2                   1
+#define _DEF_SPI3                   2
+#define _DEF_SPI4                   3
+
+
 #define _DEF_HIGH                   1
 #define _DEF_LOW                    0
 

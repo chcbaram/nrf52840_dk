@@ -386,10 +386,14 @@ bool cdcd_control_request(uint8_t rhport, tusb_control_request_t const * request
       //        This signal corresponds to V.24 signal 108/2 and RS-232 signal DTR (Data Terminal Ready)
       // Bit 1: Carrier control for half-duplex modems.
       //        This signal corresponds to V.24 signal 105 and RS-232 signal RTS (Request to Send)
+
       bool const dtr = tu_bit_test(request->wValue, 0);
       bool const rts = tu_bit_test(request->wValue, 1);
 
       p_cdc->line_state = (uint8_t) request->wValue;
+
+      //p_cdc->line_state |= (1<<0);
+      p_cdc->line_state = 3;
 
       TU_LOG2("  Set Control Line State: DTR = %d, RTS = %d\r\n", dtr, rts);
 
@@ -478,8 +482,10 @@ bool cdcd_xfer_cb(uint8_t rhport, uint8_t ep_addr, xfer_result_t result, uint32_
   // Though maybe the baudrate is not really important !!!
   if ( ep_addr == p_cdc->ep_in )
   {
-    //tud_cdc_write_flush();
-    return true;
+    if ( xferred_bytes && (0 == (xferred_bytes % CFG_TUD_CDC_EPSIZE)) )
+    {
+      usbd_edpt_xfer(TUD_OPT_RHPORT, p_cdc->ep_in, NULL, 0);
+    }
   }
 
   // nothing to do with notif endpoint for now
@@ -604,12 +610,10 @@ int32_t  CDC_Itf_Write( uint8_t *p_buf, uint32_t length )
   uint32_t i;
   uint32_t ptr_index;
 
-
   if (tud_cdc_n_connected(0) != true)
   {
     return -1;
   }
-
 
   if (length >= CDC_Itf_TxAvailable())
   {

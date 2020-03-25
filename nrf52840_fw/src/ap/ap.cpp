@@ -21,6 +21,8 @@ void apInit(void)
 
   cmdifOpen(_DEF_UART1, 57600);
   cmdifAdd("boot", bootCmdif);
+
+  spiBegin(_DEF_SPI1);
 }
 
 void apMain(void)
@@ -63,6 +65,19 @@ void bootCmdif(void)
   {
     bspDeInit();
     NVIC_SystemReset();
+  }
+  else if (cmdifGetParamCnt() == 1 && cmdifHasString("spi", 0) == true)
+  {
+    uint8_t data[2] = {1, 2};
+
+     if (spiDmaTransfer(_DEF_SPI1, (void *)data, 2, 100) == true)
+     {
+       cmdifPrintf("spi tx ok\n");
+     }
+     else
+     {
+       cmdifPrintf("spi tx fail\n");
+     }
   }
   else
   {
