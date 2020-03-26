@@ -22,7 +22,6 @@ void apInit(void)
   cmdifOpen(_DEF_UART1, 57600);
   cmdifAdd("boot", bootCmdif);
 
-  spiBegin(_DEF_SPI1);
 }
 
 void apMain(void)
@@ -55,7 +54,6 @@ void apMain(void)
 
 
 
-
 void bootCmdif(void)
 {
   bool ret = true;
@@ -69,15 +67,17 @@ void bootCmdif(void)
   else if (cmdifGetParamCnt() == 1 && cmdifHasString("spi", 0) == true)
   {
     uint8_t data[2] = {1, 2};
+    uint32_t pre_time;
 
-     if (spiDmaTransfer(_DEF_SPI1, (void *)data, 2, 100) == true)
-     {
-       cmdifPrintf("spi tx ok\n");
-     }
-     else
-     {
-       cmdifPrintf("spi tx fail\n");
-     }
+    pre_time = millis();
+    if (spiDmaTransfer(_DEF_SPI1, (void *)data, 2, 100) == true)
+    {
+      cmdifPrintf("spi tx ok, %d ms\n", millis()-pre_time);
+    }
+    else
+    {
+      cmdifPrintf("spi tx fail\n");
+    }
   }
   else
   {

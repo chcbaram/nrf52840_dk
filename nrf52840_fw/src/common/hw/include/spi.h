@@ -61,6 +61,8 @@ bool spiDmaIsTxDone(uint8_t spi_ch);
 void spiDmaSetRefresh(uint8_t spi_ch, bool enable);
 void spiAttachTxInterrupt(uint8_t spi_ch, void (*func)());
 
+void spiSetDCX(uint8_t spi_ch, uint32_t length);
+
 #ifdef __cplusplus
  }
 #endif

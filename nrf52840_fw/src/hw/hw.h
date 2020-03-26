@@ -26,7 +26,8 @@ extern "C" {
 #include "usb.h"
 #include "vcp.h"
 #include "spi.h"
-
+#include "gpio.h"
+#include "ili9341.h"
 
 
 void hwInit(void);

@@ -86,14 +86,45 @@ void spiBegin(uint8_t spi_ch)
 
       p_spi->h_spi->ENABLE = SPIM_ENABLE_ENABLE_Disabled;
       p_spi->h_spi->CSNPOL = (0<<SPIM_PSEL_CSN_PIN_Pos);  // Active Low
+      p_spi->h_spi->DCXCNT = 0;
 
-      p_spi->h_spi->PSEL.SCK  = NRF_GPIO_PIN_MAP(0, 11);
-      p_spi->h_spi->PSEL.MOSI = NRF_GPIO_PIN_MAP(0, 12);
+      p_spi->h_spi->PSEL.SCK  = NRF_GPIO_PIN_MAP(1,  4);
+      p_spi->h_spi->PSEL.MOSI = NRF_GPIO_PIN_MAP(1,  5);
       p_spi->h_spi->PSEL.MISO = 0;
-      p_spi->h_spi->PSEL.CSN  = NRF_GPIO_PIN_MAP(0, 13);
-      p_spi->h_spi->PSELDCX   = NRF_GPIO_PIN_MAP(0, 14);
+      p_spi->h_spi->PSEL.CSN  = NRF_GPIO_PIN_MAP(1,  8);
+      p_spi->h_spi->PSELDCX   = NRF_GPIO_PIN_MAP(1,  6);
 
-      p_spi->h_spi->PSELDCX   = NRF_GPIO_PIN_MAP(0, 14);
+      nrf_gpio_cfg(
+          p_spi->h_spi->PSEL.SCK,
+          NRF_GPIO_PIN_DIR_OUTPUT,
+          NRF_GPIO_PIN_INPUT_DISCONNECT,
+          NRF_GPIO_PIN_NOPULL,
+          NRF_GPIO_PIN_H0H1,
+          NRF_GPIO_PIN_NOSENSE);
+
+      nrf_gpio_cfg(
+          p_spi->h_spi->PSEL.MOSI,
+          NRF_GPIO_PIN_DIR_OUTPUT,
+          NRF_GPIO_PIN_INPUT_DISCONNECT,
+          NRF_GPIO_PIN_NOPULL,
+          NRF_GPIO_PIN_H0H1,
+          NRF_GPIO_PIN_NOSENSE);
+
+      nrf_gpio_cfg(
+          p_spi->h_spi->PSEL.CSN,
+          NRF_GPIO_PIN_DIR_OUTPUT,
+          NRF_GPIO_PIN_INPUT_DISCONNECT,
+          NRF_GPIO_PIN_NOPULL,
+          NRF_GPIO_PIN_H0H1,
+          NRF_GPIO_PIN_NOSENSE);
+
+      nrf_gpio_cfg(
+          p_spi->h_spi->PSELDCX,
+          NRF_GPIO_PIN_DIR_OUTPUT,
+          NRF_GPIO_PIN_INPUT_DISCONNECT,
+          NRF_GPIO_PIN_NOPULL,
+          NRF_GPIO_PIN_H0H1,
+          NRF_GPIO_PIN_NOSENSE);
 
       p_spi->h_spi->IFTIMING.CSNDUR = 0; // n * 15.625ns
       p_spi->h_spi->ORC = 0;
@@ -121,8 +152,15 @@ void spiBegin(uint8_t spi_ch)
   }
 }
 
+void spiSetDCX(uint8_t spi_ch, uint32_t length)
+{
+  spi_tbl[spi_ch].h_spi->DCXCNT = length;
+}
+
 void spiTransfer(uint8_t spi_ch, uint8_t *p_tx_data, uint8_t *p_rx_data, uint32_t length)
 {
+
+  spiDmaTransfer(spi_ch, p_tx_data, length, 100);
 
   return;
 }
@@ -137,6 +175,7 @@ uint8_t spiTransfer8(uint8_t spi_ch, uint8_t data)
   if (p_spi->is_open == false) return 0;
 
 
+  spiDmaTransfer(spi_ch, &data, 1, 50);
 
   return ret;
 }
@@ -145,7 +184,7 @@ uint8_t spiTransfer8(uint8_t spi_ch, uint8_t data)
 uint16_t spiTransfer16(uint8_t spi_ch, uint16_t data)
 {
   uint8_t tBuf[2];
-  uint8_t rBuf[2];
+  //uint8_t rBuf[2];
   uint16_t ret;
   spi_t  *p_spi = &spi_tbl[spi_ch];
 
@@ -156,15 +195,17 @@ uint16_t spiTransfer16(uint8_t spi_ch, uint16_t data)
   {
     tBuf[1] = (uint8_t)data;
     tBuf[0] = (uint8_t)(data>>8);
-    //HAL_SPI_TransmitReceive(&p_spi->h_spi, (uint8_t *)&tBuf, (uint8_t *)&rBuf, 2, 0xffff);
 
-    ret = rBuf[0];
-    ret <<= 8;
-    ret += rBuf[1];
+    spiDmaTransfer(spi_ch, tBuf, 2, 50);
+
+    //ret = rBuf[0];
+    //ret <<= 8;
+    //ret += rBuf[1];
+    ret = 0;
   }
   else
   {
-    //HAL_SPI_TransmitReceive(&p_spi->h_spi, (uint8_t *)&data, (uint8_t *)&ret, 1, 0xffff);
+    spiDmaTransfer(spi_ch, (uint8_t *)&data, 2, 50);
   }
   return ret;
 }
@@ -191,9 +232,6 @@ void spiSetBitOrder(uint8_t spi_ch, uint8_t bitOrder)
 void spiSetClockDivider(uint8_t spi_ch, uint32_t clockDiv)
 {
   spi_t  *p_spi = &spi_tbl[spi_ch];
-
-
-  if (p_spi->is_open == false) return;
 
 
   switch(clockDiv)
@@ -400,6 +438,7 @@ void spiTxISR(uint8_t spi_ch)
   else
   {
     p_spi->dma_tx_buf.tx_done = true;
+    p_spi->h_spi->DCXCNT = 0;
 
     if (p_spi->func_tx != NULL)
     {

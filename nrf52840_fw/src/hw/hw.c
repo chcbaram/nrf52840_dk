@@ -56,10 +56,11 @@ void hwInit(void)
   logPrintf("Addr Fw    \t\t: 0x%X\r\n", (int)fw_tag.addr_fw);
   logPrintf("Addr Hw    \t\t: 0x%X\r\n", (int)hwInit);
 
-
+  gpioInit();
   spiInit();
   flashInit();
 
   usbInit();
 
+  ili9341Init();
 }

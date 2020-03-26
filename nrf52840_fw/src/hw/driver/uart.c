@@ -432,4 +432,9 @@ void UARTE0_UART0_IRQHandler(void)
     p_uart->handle->EVENTS_RXDRDY = 0;
     qbufferWrite(&p_uart->qbuffer_rx, &data, 1);
   }
+
+  if (p_uart->handle->EVENTS_ERROR)
+  {
+    p_uart->handle->EVENTS_ERROR = 0;
+  }
 }
