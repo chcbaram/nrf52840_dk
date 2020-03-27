@@ -65,7 +65,7 @@ bool ili9341Init(void)
 
 
   ili9341InitRegs();
-  illi9341SetRotation(0);
+  illi9341SetRotation(6);
 
   return true;
 }

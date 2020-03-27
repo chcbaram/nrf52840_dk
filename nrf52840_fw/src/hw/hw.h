@@ -31,6 +31,9 @@ extern "C" {
 #include "lcd.h"
 
 
+#include "driver/jpeg/tjpgd.h"
+
+
 void hwInit(void);
 
 
