@@ -14,44 +14,44 @@
 
 
 
-enum class_color {
- white     = 0xFFFF,
- gray      = 0x8410,
- darkgray  = 0xAD55,
- black     = 0x0000,
- purple    = 0x8010,
- pink      = 0xFE19,
- red       = 0xF800,
- orange    = 0xFD20,
- brown     = 0xA145,
- beige     = 0xF7BB,
- yellow    = 0xFFE0,
- lightgreen= 0x9772,
- green     = 0x0400,
- darkblue  = 0x0011,
- blue      = 0x001F,
- lightblue = 0xAEDC,
-};
-
 
 
 
 #define _PIN_DEF_RST    0
 
 static uint8_t spi_ch = _DEF_SPI1;
+static int32_t _width  = HW_LCD_WIDTH;
+static int32_t _height = HW_LCD_HEIGHT;
+static void (*frameCallBack)(void) = NULL;
 
-static int32_t _width  = ILI9341_LCD_WIDTH;
-static int32_t _height = ILI9341_LCD_HEIGHT;
+volatile static bool  is_write_frame = false;
 
 static void ili9341InitRegs(void);
 static void writecommand(uint8_t c);
 static void writedata(uint8_t d);
-static void ili9341FillRect(int32_t x, int32_t y, int32_t w, int32_t h, uint32_t color);
-static void illi9341SetRotation(uint8_t m);
+void ili9341FillRect(int32_t x, int32_t y, int32_t w, int32_t h, uint32_t color);
+void illi9341SetRotation(uint8_t m);
+
+
+
+static void TransferDoneISR(void)
+{
+  if (is_write_frame == true)
+  {
+    is_write_frame = false;
+    if (frameCallBack != NULL)
+    {
+      frameCallBack();
+    }
+  }
+}
+
+
 
 bool ili9341Init(void)
 {
   spiBegin(spi_ch);
+  spiAttachTxInterrupt(spi_ch, TransferDoneISR);
 
 
   //-- Reset Lcd
@@ -67,18 +67,30 @@ bool ili9341Init(void)
   ili9341InitRegs();
   illi9341SetRotation(0);
 
-  uint32_t pre_time = millis();
-  uint32_t y = 0;
-  ili9341FillRect(0,  y, 320,  48, black); y += 48;
-  ili9341FillRect(0,  y, 320,  48, red);   y += 48;
-  ili9341FillRect(0,  y, 320,  48, green); y += 48;
-  ili9341FillRect(0,  y, 320,  48, blue);  y += 48;
-  ili9341FillRect(0,  y, 320,  48, white); y += 48;
-  logPrintf("%d ms\n", millis()-pre_time);
   return true;
 }
 
+bool ili9341InitDriver(lcd_driver_t *p_driver)
+{
+  p_driver->init = ili9341Init;
+  p_driver->setWindow = ili9341SetWindow;
+  p_driver->getWidth = ili9341GetWidth;
+  p_driver->getHeight = ili9341GetHeight;
+  p_driver->setCallBack = ili9341SetCallBack;
+  p_driver->writeFrame = ili9341WriteFrame;
 
+  return true;
+}
+
+uint16_t ili9341GetWidth(void)
+{
+  return HW_LCD_WIDTH;
+}
+
+uint16_t ili9341GetHeight(void)
+{
+  return HW_LCD_HEIGHT;
+}
 
 void writecommand(uint8_t c)
 {
@@ -338,5 +350,17 @@ void ili9341FillRect(int32_t x, int32_t y, int32_t w, int32_t h, uint32_t color)
   {
     spiDmaTransfer(spi_ch, buf, w*2, 50);
   }
+}
 
+bool ili9341WriteFrame(uint8_t *p_data, uint32_t length, uint32_t timeout_ms)
+{
+  is_write_frame = true;
+  return spiDmaTransfer(spi_ch, p_data, length, timeout_ms);
+}
+
+bool ili9341SetCallBack(void (*p_func)(void))
+{
+  frameCallBack = p_func;
+
+  return true;
 }

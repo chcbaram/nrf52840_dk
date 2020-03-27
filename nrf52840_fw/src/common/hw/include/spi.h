@@ -51,6 +51,7 @@ uint8_t  spiTransfer8(uint8_t spi_ch, uint8_t data);
 uint16_t spiTransfer16(uint8_t spi_ch, uint16_t data);
 bool     spiDmaTransfer(uint8_t spi_ch, void *buf, uint32_t length, uint32_t timeout) ;
 
+
 void spiSetBitOrder(uint8_t spi_ch, uint8_t bitOrder);
 void spiSetClockDivider(uint8_t spi_ch, uint32_t clockDiv);
 void spiSetDataMode(uint8_t spi_ch, uint8_t dataMode);

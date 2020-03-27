@@ -28,6 +28,7 @@ extern "C" {
 #include "spi.h"
 #include "gpio.h"
 #include "ili9341.h"
+#include "lcd.h"
 
 
 void hwInit(void);

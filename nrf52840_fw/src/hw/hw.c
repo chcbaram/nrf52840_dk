@@ -62,5 +62,8 @@ void hwInit(void)
 
   usbInit();
 
-  ili9341Init();
+  lcdInit();
+
+  lcdDrawFillScreen(lcdSwap16(red));
+  lcdUpdateDraw();
 }

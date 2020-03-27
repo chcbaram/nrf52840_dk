@@ -404,7 +404,6 @@ void spiAttachTxInterrupt(uint8_t spi_ch, void (*func)())
 
 
   p_spi->func_tx = func;
-
 }
 
 

@@ -47,6 +47,29 @@ void apMain(void)
     {
       uartPrintf(_DEF_UART2, "rx : 0x%X\n", uartRead(_DEF_UART2));
     }
+
+    static uint32_t lcd_pre_time;
+    static uint32_t fps_time;
+    static uint32_t fps;
+    static uint32_t x = 0;
+    static uint32_t y = 0;
+
+    if (lcdDrawAvailable() > 0)
+    {
+      lcd_pre_time = micros();
+      lcdClearBuffer(black);
+      logPrintf("%d us\n", micros()-lcd_pre_time);
+      lcdDrawFillRect(x, 32, 30, 30, lcdSwap16(red));
+      lcdDrawFillRect(lcdGetWidth()-x, 62, 30, 30, lcdSwap16(green));
+      lcdDrawFillRect(x + 30, 92, 30, 30, lcdSwap16(blue));
+
+      x += 4;
+
+      x %= lcdGetWidth();
+      y %= lcdGetHeight();
+
+      lcdRequestDraw();
+    }
   }
 }
 
