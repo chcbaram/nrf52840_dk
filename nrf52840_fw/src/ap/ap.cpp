@@ -11,6 +11,7 @@
 #include "ap.h"
 #include "image.h"
 #include "image2.h"
+#include "image3.h"
 
 #define TJPGD_WORKSPACE_SIZE  4096
 uint8_t workspace[TJPGD_WORKSPACE_SIZE] __attribute__((aligned(4)));
@@ -75,10 +76,12 @@ void apMain(void)
   uint32_t pre_time;
   uint8_t *p_image[8];
   static uint8_t  index = 0;
+  bool update = true;
 
 
   p_image[0] = (uint8_t *)image1;
   p_image[1] = (uint8_t *)image2;
+  p_image[2] = (uint8_t *)image3;
   while(1)
   {
     if (millis()-pre_time >= 500)
@@ -106,7 +109,7 @@ void apMain(void)
     static uint32_t y = 0;
 
 
-    if (lcdDrawAvailable() > 0)
+    if (lcdDrawAvailable() > 0 && update == true)
     {
       JDEC jdec;
       JRESULT jresult = JDR_OK;
@@ -145,11 +148,13 @@ void apMain(void)
       }
 
       lcdRequestDraw();
+      update = false;
     }
 
     if (buttonGetReleasedEvent(0) && buttonGetPressedTime(0) > 100)
     {
-      index = (index+1) % 2;
+      index = (index+1) % 3;
+      update = true;
     }
   }
 }

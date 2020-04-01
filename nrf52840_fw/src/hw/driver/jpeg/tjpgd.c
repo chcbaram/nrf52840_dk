@@ -299,7 +299,7 @@ static int16_t huffext (	/* >=0: decoded data, <0: error code */
 )
 {
 	uint8_t msk, s, *dp;
-	uint16_t dc, v, f, bl, nd;
+	uint32_t dc, v, f, bl, nd;
 
 
 	msk = jd->dmsk; dc = jd->dctr; dp = jd->dptr;	/* Bit mask, number of data available, read ptr */
@@ -359,7 +359,7 @@ static void block_idct (
 	const int32_t M13 = (int32_t)(1.41421*4096), M2 = (int32_t)(1.08239*4096), M4 = (int32_t)(2.61313*4096), M5 = (int32_t)(1.84776*4096);
 	int32_t v0, v1, v2, v3, v4, v5, v6, v7;
 	int32_t t10, t11, t12, t13;
-	uint16_t i;
+	uint32_t i;
 
 	/* Process columns */
 	for (i = 0; i < 8; i++) {
@@ -469,7 +469,7 @@ static JRESULT mcu_load (
 {
 	int32_t *tmp = (int32_t*)jd->workbuf;	/* Block working buffer for de-quantize and IDCT */
 	int b, d, e;
-	uint16_t blk, nby, nbc, i, z, id, cmp;
+	uint32_t blk, nby, nbc, i, z, id, cmp;
 	uint8_t *bp;
 	const uint8_t *hb, *hd;
 	const uint16_t *hc;
@@ -946,8 +946,8 @@ JRESULT jd_decomp (
 	uint8_t scale							/* Output de-scaling factor (0 to 3) */
 )
 {
-	uint16_t x, y, mx, my;
-	uint16_t rst, rsc;
+	uint32_t x, y, mx, my;
+	uint32_t rst, rsc;
 	JRESULT rc;
 
 

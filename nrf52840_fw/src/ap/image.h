@@ -5,6 +5,9 @@
  *      Author: HanCheol Cho
  */
 
+// http://tomeko.net/online_tools/file_to_hex.php?lang=en
+
+
 #ifndef SRC_AP_IMAGE_H_
 #define SRC_AP_IMAGE_H_
 
