@@ -44,6 +44,11 @@
 #define _USE_HW_GPIO
 #define      HW_GPIO_MAX_CH         1
 
+#define _USE_HW_QSPI
+#define      HW_QSPI_DRIVER         MX25R6435F
+#define      HW_QSPI_BASE_ADDR      0x12000000
+
+
 
 
 #endif /* SRC_HW_HW_DEF_H_ */

@@ -13,6 +13,10 @@
 #include "flash.h"
 #include "cmdif.h"
 #include "nrfx_nvmc.h"
+#ifdef _USE_HW_QSPI
+#include "qspi.h"
+#endif
+
 
 
 #define FLASH_ADDR_OFFSET         0x00000000
@@ -47,6 +51,9 @@ bool flashInit(void)
     logPrintf("False                \t : Fail\r\n");
   }
 
+#ifdef _USE_HW_QSPI
+  qspiInit();
+#endif
 
 #ifdef _USE_HW_CMDIF
   flashCmdifInit();
@@ -252,6 +259,10 @@ void flashCmdif(void)
     {
       cmdifPrintf("flash init  : %d\n", is_init);
       cmdifPrintf("flash addr  : 0x%X\n", 0x00000000);
+      #ifdef _USE_HW_QSPI
+      cmdifPrintf("qspi init   : %d\n", (int)qspiIsInit());
+      cmdifPrintf("qspi addr   : 0x%X\n", qspiGetAddr());
+      #endif
     }
     else
     {
