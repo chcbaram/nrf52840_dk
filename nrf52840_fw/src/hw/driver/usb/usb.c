@@ -87,7 +87,12 @@ void usb_init(bool cdc_only)
     tusb_hal_nrf_power_event(NRFX_POWER_USB_EVT_READY);
   }
 
+#if CFG_TUD_MSC == 0
   usb_desc_init(cdc_only);
+#else
+  usb_desc_init(false);
+#endif
+
 
   // Init TinyUSB stack
   tusb_init();

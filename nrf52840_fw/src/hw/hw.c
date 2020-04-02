@@ -63,7 +63,5 @@ void hwInit(void)
   usbInit();
 
   lcdInit();
-
-  lcdDrawFillScreen(lcdSwap16(red));
-  lcdUpdateDraw();
+  fatfsInit();
 }

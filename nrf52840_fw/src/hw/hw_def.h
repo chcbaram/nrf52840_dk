@@ -19,6 +19,8 @@
 #define _USE_HW_VCP
 #define _USE_HW_ILI9341
 #define _USE_HW_LCD
+#define _USE_HW_FATFS
+#define _USE_HW_FILES
 
 
 #define _USE_HW_LED

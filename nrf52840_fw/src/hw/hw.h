@@ -30,6 +30,8 @@ extern "C" {
 #include "ili9341.h"
 #include "lcd.h"
 #include "qspi.h"
+#include "fatfs.h"
+
 
 #include "driver/jpeg/tjpgd.h"
 
