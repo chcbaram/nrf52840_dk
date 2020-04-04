@@ -64,4 +64,5 @@ void hwInit(void)
 
   lcdInit();
   fatfsInit();
+  lvglInit();
 }

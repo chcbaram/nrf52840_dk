@@ -15,6 +15,12 @@
 
 
 
+#define LCD_FRAME_SCALE       2
+
+#define LCD_FRAME_WIDTH       (HW_LCD_WIDTH/LCD_FRAME_SCALE)
+#define LCD_FRAME_HEIGHT      (HW_LCD_HEIGHT/LCD_FRAME_SCALE)
+
+
 #ifndef _swap_int16_t
 #define _swap_int16_t(a, b) { int16_t t = a; a = b; b = t; }
 #endif
@@ -27,9 +33,10 @@ static lcd_driver_t lcd;
 
 static bool is_init = false;
 static volatile bool is_tx_done = true;
+
 static uint8_t backlight_value = 100;
 static uint8_t frame_index = 0;
-static volatile bool is_double_buffer = false;
+static volatile bool is_double_buffer = true;
 
 static uint32_t fps_pre_time;
 static uint32_t fps_time;
@@ -37,8 +44,13 @@ static uint32_t fps_count = 0;
 
 
 static uint16_t *p_draw_frame_buf = NULL;
-static uint16_t frame_cnt = 1;
-static uint16_t frame_buffer[1][HW_LCD_WIDTH * HW_LCD_HEIGHT];
+static uint16_t frame_cnt = 2;
+static uint16_t frame_buffer[2][LCD_FRAME_WIDTH * LCD_FRAME_HEIGHT];
+//static uint16_t frame_buffer[1][LCD_FRAME_WIDTH];
+
+#if LCD_FRAME_SCALE == 2
+static uint32_t line_buffer[2][LCD_FRAME_WIDTH * (HW_LCD_HEIGHT/8)];
+#endif
 
 static uint16_t _win_w  = HW_LCD_WIDTH;
 static uint16_t _win_h  = HW_LCD_HEIGHT;
@@ -49,8 +61,62 @@ static uint16_t _win_y  = 0;
 
 void lcdSwapFrameBuffer(void);
 
+#if LCD_FRAME_SCALE == 2
+bool lcdSendScaledBuffer(void)
+{
+  bool ret = true;
+  int x;
+  int y;
+  int i;
+  uint16_t *p_src;
+  uint32_t *p_dst1;
+  uint32_t *p_dst2;
+  uint16_t src_color;
+  uint32_t dst_color;
+  uint32_t y_block = LCD_FRAME_HEIGHT/8;
+  uint32_t src_y;
+  uint32_t dst_y;
+  uint32_t line_index = 0;
+  uint32_t *p_line;
+
+  uint32_t pre_time;
+
+  src_y = 0;
+  for (i=0; i<8; i++)
+  {
+    dst_y = 0;
+
+    pre_time = micros();
+    p_line = line_buffer[line_index];
+    for (y=0; y<y_block; y++)
+    {
+      p_src  = &p_draw_frame_buf[LCD_FRAME_WIDTH * src_y];
+      p_dst1 = &p_line[LCD_FRAME_WIDTH * (dst_y + 0)];
+      p_dst2 = &p_line[LCD_FRAME_WIDTH * (dst_y + 1)];
+
+      src_y += 1;
+      dst_y += 2;
+
+      for (x=0; x<LCD_FRAME_WIDTH; x++)
+      {
+        src_color = p_src[x];
+        dst_color = (src_color<<16) | (src_color<<0);
+        p_dst1[x] = dst_color;
+        p_dst2[x] = dst_color;
+      }
+    }
+    line_index ^= 1;
 
 
+    while(!lcdDrawAvailable());
+
+    is_tx_done = false;
+    lcd.sendBuffer((uint8_t *)p_line, HW_LCD_WIDTH*y_block*2*2, 0);
+  }
+
+  return ret;
+}
+#endif
 
 void TransferDoneISR(void)
 {
@@ -78,14 +144,15 @@ bool lcdInit(void)
 
   lcd.setCallBack(TransferDoneISR);
 
-
-  for (int i=0; i<HW_LCD_WIDTH*HW_LCD_HEIGHT; i++)
+/*
+  for (int i=0; i<LCD_FRAME_WIDTH*LCD_FRAME_HEIGHT; i++)
   {
     for (int j=0; j<frame_cnt; j++)
     {
       frame_buffer[j][i] = black;
     }
   }
+*/
 
   if (is_double_buffer == true)
   {
@@ -96,7 +163,15 @@ bool lcdInit(void)
     p_draw_frame_buf = frame_buffer[frame_index];
   }
 
-  lcdClear(black);
+
+  uint16_t line_buf[HW_LCD_WIDTH];
+  memset(line_buf, 0x00, HW_LCD_WIDTH*2);
+  lcd.setWindow(_win_x, _win_y, (_win_x+_win_w)-1, (_win_y+_win_h)-1);
+
+  for (int i=0; i<HW_LCD_HEIGHT; i++)
+  {
+    lcd.sendBuffer((uint8_t *)line_buf, HW_LCD_WIDTH*2, 10);
+  }
 
   lcdSetBackLight(backlight_value);
 
@@ -128,12 +203,12 @@ void lcdSetBackLight(uint8_t value)
 
 uint32_t lcdReadPixel(uint16_t x_pos, uint16_t y_pos)
 {
-  return p_draw_frame_buf[y_pos * HW_LCD_WIDTH + x_pos];
+  return p_draw_frame_buf[y_pos * LCD_FRAME_WIDTH + x_pos];
 }
 
 void lcdDrawPixel(uint16_t x_pos, uint16_t y_pos, uint32_t rgb_code)
 {
-  p_draw_frame_buf[y_pos * HW_LCD_WIDTH + x_pos] = rgb_code;
+  p_draw_frame_buf[y_pos * LCD_FRAME_WIDTH + x_pos] = rgb_code;
 }
 
 void lcdClear(uint32_t rgb_code)
@@ -147,7 +222,7 @@ void lcdClearBuffer(uint32_t rgb_code)
 {
   uint16_t *p_buf = lcdGetFrameBuffer();
 
-  for (int i=0; i<HW_LCD_WIDTH * HW_LCD_HEIGHT; i++)
+  for (int i=0; i<LCD_FRAME_WIDTH * LCD_FRAME_HEIGHT; i++)
   {
     p_buf[i] = rgb_code;
   }
@@ -190,8 +265,13 @@ bool lcdRequestDraw(void)
 
   lcd.setWindow(_win_x, _win_y, (_win_x+_win_w)-1, (_win_y+_win_h)-1);
 
+
+#if LCD_FRAME_SCALE == 1
   is_tx_done = false;
-  lcd.writeFrame((uint8_t *)p_draw_frame_buf, _win_w*_win_h*2, 0);
+  lcd.sendBuffer((uint8_t *)p_draw_frame_buf, _win_w*_win_h*2, 0);
+#else
+  lcdSendScaledBuffer();
+#endif
 
   return true;
 }
@@ -205,6 +285,12 @@ void lcdUpdateDraw(void)
 void lcdSetWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
 {
   lcd.setWindow(x, y, w, h);
+}
+
+void lcdSendBuffer(uint8_t *p_data, uint32_t length, uint32_t timeout_ms)
+{
+  is_tx_done = false;
+  lcd.sendBuffer(p_data, length, timeout_ms);
 }
 
 void lcdSwapFrameBuffer(void)
@@ -242,12 +328,12 @@ void lcdDisplayOn(void)
 
 int32_t lcdGetWidth(void)
 {
-  return HW_LCD_WIDTH;
+  return LCD_FRAME_WIDTH;
 }
 
 int32_t lcdGetHeight(void)
 {
-  return HW_LCD_HEIGHT;
+  return LCD_FRAME_HEIGHT;
 }
 
 
@@ -327,6 +413,6 @@ void lcdDrawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
 
 void lcdDrawFillScreen(uint16_t color)
 {
-  lcdDrawFillRect(0, 0, HW_LCD_WIDTH, HW_LCD_HEIGHT, color);
+  lcdDrawFillRect(0, 0, LCD_FRAME_WIDTH, LCD_FRAME_HEIGHT, color);
 }
 

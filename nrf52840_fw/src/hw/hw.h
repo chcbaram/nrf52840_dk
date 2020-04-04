@@ -31,6 +31,7 @@ extern "C" {
 #include "lcd.h"
 #include "qspi.h"
 #include "fatfs.h"
+#include "lvgl.h"
 
 
 #include "driver/jpeg/tjpgd.h"

@@ -57,7 +57,7 @@
 
 //------------- Class enabled -------------//
 #define CFG_TUD_CDC                 1
-#define CFG_TUD_MSC                 1
+#define CFG_TUD_MSC                 0
 
 /*------------------------------------------------------------------*/
 /* CLASS DRIVER

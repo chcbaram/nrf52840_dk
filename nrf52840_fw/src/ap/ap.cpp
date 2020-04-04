@@ -7,14 +7,14 @@
 
 
 
-
 #include "ap.h"
 
 
 
-
-
 void bootCmdif(void);
+static void threadUsb(void const *argument);
+static void threadLED(void const *argument);
+static void threadLCD(void const *argument);
 
 
 void apInit(void)
@@ -24,64 +24,89 @@ void apInit(void)
   cmdifOpen(_DEF_UART1, 57600);
   cmdifAdd("boot", bootCmdif);
 
+  osThreadDef(threadUsb, threadUsb, _HW_DEF_RTOS_THREAD_PRI_USB, 0, _HW_DEF_RTOS_THREAD_MEM_USB);
+  osThreadCreate(osThread(threadUsb), NULL);
+
+  osThreadDef(threadLED, threadLED, _HW_DEF_RTOS_THREAD_PRI_LED, 0, _HW_DEF_RTOS_THREAD_MEM_LED);
+  osThreadCreate(osThread(threadLED), NULL);
+
+  osThreadDef(threadLCD, threadLCD, _HW_DEF_RTOS_THREAD_PRI_LCD, 0, _HW_DEF_RTOS_THREAD_MEM_LCD);
+  osThreadCreate(osThread(threadLCD), NULL);
 }
 
 void apMain(void)
 {
-  uint32_t pre_time;
-
-
   while(1)
   {
-    if (millis()-pre_time >= 500)
-    {
-      pre_time = millis();
-
-      ledToggle(_DEF_LED1);
-    }
     cmdifMain();
+    osThreadYield();
+  }
+}
 
-    if ( tusb_inited() )
+
+static void threadUsb(void const *argument)
+{
+
+  for(;;)
+  {
+    if (tusb_inited())
     {
       tud_task();
     }
+    osThreadYield();
+  }
+}
 
+
+static void threadLED(void const *argument)
+{
+  for(;;)
+  {
+    ledToggle(_DEF_LED1);
+    osDelay(500);
+  }
+}
+
+
+static void threadLCD(void const *argument)
+{
+  uint32_t pre_time = 0;
+  uint32_t fps_time = 0;
+  uint16_t x = 0;
+  uint16_t y = 0;
+
+  for(;;)
+  {
 #if 0
-
-    if (uartAvailable(_DEF_UART2) > 0)
+    if (lcdDrawAvailable() > 0)
     {
-      uartPrintf(_DEF_UART2, "rx : 0x%X\n", uartRead(_DEF_UART2));
-    }
-
-    static bool update = true;
-    static uint32_t x = 0;
-    static uint32_t y = 0;
-
-
-    if (lcdDrawAvailable() > 0 && update == true)
-    {
+      pre_time = millis();
       lcdClearBuffer(black);
-      lcdDrawFillRect(x, 32, 30, 30, lcdSwap16(red));
-      lcdDrawFillRect(lcdGetWidth()-x, 62, 30, 30, lcdSwap16(green));
-      lcdDrawFillRect(x + 30, 92, 30, 30, lcdSwap16(blue));
 
-      x += 4;
+      lcdDrawFillRect(x, 32, 20, 20, red);
+      lcdDrawFillRect(lcdGetWidth() - x, 52, 20, 20, green);
+      lcdDrawFillRect(x + 30, 72, 20, 20, blue);
+
+      //lcdPrintf(0, 0, white, "%d ms", millis()-fps_time);
+      //lcdPrintf(0, 16, white, "%d fps", 1000/(millis()-fps_time));
+
+      //radioPrintf(RADIO_CH_0,"lcd %d ms, %d fps, draw %d ms\n", millis()-fps_time, 1000/(millis()-fps_time), millis()-pre_time);
+      fps_time = millis();
+
+      x += 2;
 
       x %= lcdGetWidth();
       y %= lcdGetHeight();
 
       lcdRequestDraw();
-      update = false;
-    }
-
-    if (buttonGetReleasedEvent(0) && buttonGetPressedTime(0) > 100)
-    {
-      update = true;
     }
 #endif
-
+    //lvglUpdate();
+    osThreadYield();
   }
 }
+
+
 
 
 

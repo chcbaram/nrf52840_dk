@@ -46,7 +46,7 @@ uint16_t ili9341GetWidth(void);
 uint16_t ili9341GetHeight(void);
 
 bool ili9341SetCallBack(void (*p_func)(void));
-bool ili9341WriteFrame(uint8_t *p_data, uint32_t length, uint32_t timeout_ms);
+bool ili9341SendBuffer(uint8_t *p_data, uint32_t length, uint32_t timeout_ms);
 
 #endif
 

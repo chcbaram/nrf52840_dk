@@ -77,7 +77,7 @@ bool ili9341InitDriver(lcd_driver_t *p_driver)
   p_driver->getWidth = ili9341GetWidth;
   p_driver->getHeight = ili9341GetHeight;
   p_driver->setCallBack = ili9341SetCallBack;
-  p_driver->writeFrame = ili9341WriteFrame;
+  p_driver->sendBuffer = ili9341SendBuffer;
 
   return true;
 }
@@ -275,32 +275,6 @@ void ili9341SetWindow(int32_t x0, int32_t y0, int32_t x1, int32_t y1)
 {
   uint8_t buf[8];
 
-#ifdef CGRAM_OFFSET
-  x0+=colstart;
-  x1+=colstart;
-  y0+=rowstart;
-  y1+=rowstart;
-#endif
-
-#if 0
-  // Column addr set
-  DC_C;
-  tft_Write_8(TFT_CASET);
-  DC_D;
-  tft_Write_32C(x0, x1);
-
-  // Row addr set
-  DC_C;
-  tft_Write_8(TFT_PASET);
-  DC_D;
-  tft_Write_32C(y0, y1);
-
-  DC_C;
-  tft_Write_8(TFT_RAMWR);
-
-  DC_D;
-#endif
-
   buf[0] = TFT_CASET;
   buf[1] = x0>>8;
   buf[2] = x0>>0;
@@ -352,7 +326,7 @@ void ili9341FillRect(int32_t x, int32_t y, int32_t w, int32_t h, uint32_t color)
   }
 }
 
-bool ili9341WriteFrame(uint8_t *p_data, uint32_t length, uint32_t timeout_ms)
+bool ili9341SendBuffer(uint8_t *p_data, uint32_t length, uint32_t timeout_ms)
 {
   is_write_frame = true;
   return spiDmaTransfer(spi_ch, p_data, length, timeout_ms);

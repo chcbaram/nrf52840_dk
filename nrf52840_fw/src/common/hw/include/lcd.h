@@ -45,7 +45,7 @@ typedef struct lcd_driver_t_
   uint16_t (*getWidth)(void);
   uint16_t (*getHeight)(void);
   bool     (*setCallBack)(void (*p_func)(void));
-  bool     (*writeFrame)(uint8_t *p_data, uint32_t length, uint32_t timeout_ms);
+  bool     (*sendBuffer)(uint8_t *p_data, uint32_t length, uint32_t timeout_ms);
 } lcd_driver_t;
 
 
@@ -65,6 +65,7 @@ bool lcdDrawAvailable(void);
 bool lcdRequestDraw(void);
 void lcdUpdateDraw(void);
 void lcdSetWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
+void lcdSendBuffer(uint8_t *p_data, uint32_t length, uint32_t timeout_ms);
 void lcdDisplayOff(void);
 void lcdDisplayOn(void);
 

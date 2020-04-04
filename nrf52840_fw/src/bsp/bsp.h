@@ -16,6 +16,7 @@ extern "C" {
 #include "def.h"
 #include "nrf.h"
 
+#include "cmsis_os.h"
 
 #include "nrfx_systick.h"
 #include "nrf_gpio.h"

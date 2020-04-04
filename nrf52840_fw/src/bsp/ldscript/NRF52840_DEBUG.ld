@@ -22,6 +22,7 @@ SECTIONS
   .isr_vector :
   {
     __isr_vector_addr = .;
+    __isr_vector = .;
     . = ALIGN(4);    
     KEEP(*(.isr_vector)) /* Startup code */
     . = ALIGN(4);
